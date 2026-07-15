@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>抖音直播投放全维度复盘系统</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:#f0f2f5;color:#333}
+
+/* ===== 顶部 ===== */
+.header{background:linear-gradient(135deg,#1F3864,#2E5496);color:#fff;padding:28px 40px;text-align:center}
+.header h1{font-size:24px;margin-bottom:6px}
+.header p{font-size:13px;opacity:.8}
+
+/* ===== 上传区 ===== */
+.container{max-width:900px;margin:0 auto;padding:32px 24px}
+.upload-zone{background:#fff;border-radius:16px;padding:48px 32px;margin-bottom:24px;box-shadow:0 2px 12px rgba(0,0,0,.06);text-align:center;border:3px dashed #d0d5dd;transition:all .3s;cursor:pointer}
+.upload-zone:hover,.upload-zone.dragover{border-color:#2E5496;background:#f8fafe}
+.upload-zone .icon{font-size:48px;margin-bottom:16px}
+.upload-zone .title{font-size:18px;font-weight:600;color:#333;margin-bottom:8px}
+.upload-zone .desc{font-size:13px;color:#888;line-height:1.6}
+.format-tag{display:inline-block;padding:4px 12px;border-radius:6px;font-size:12px;margin:0 4px}
+.format-tag.excel{background:#E8F5E9;color:#2E7D32}
+.format-tag.img{background:#E3F2FD;color:#1565C0}
+
+/* ===== 文件列表 ===== */
+.file-list{background:#fff;border-radius:12px;padding:20px 24px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,.04);display:none}
+.file-list.show{display:block}
+.file-list h3{font-size:15px;color:#1F3864;margin-bottom:12px}
+.file-item{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#f8fafe;border-radius:8px;margin-bottom:8px}
+.file-item .name{font-size:13px;font-weight:500}
+.file-item .badge{font-size:11px;padding:2px 10px;border-radius:4px;font-weight:600}
+.badge.live{background:#E3F2FD;color:#1565C0}
+.badge.ad{background:#FFF3E0;color:#E65100}
+.badge.material{background:#F3E5F5;color:#7B1FA2}
+.badge.image{background:#E8F5E9;color:#2E7D32}
+.badge.unknown{background:#ECEFF1;color:#546E7A}
+.file-item .remove{color:#f44336;cursor:pointer;font-size:18px;font-weight:bold;margin-left:12px}
+
+/* ===== 按钮 ===== */
+.actions{text-align:center;margin-bottom:24px}
+.btn-analyze{background:linear-gradient(135deg,#1F3864,#2E5496);color:#fff;border:none;padding:16px 48px;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;transition:all .3s;box-shadow:0 4px 12px rgba(31,56,100,.3)}
+.btn-analyze:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(31,56,100,.4)}
+.btn-analyze:disabled{opacity:.5;cursor:not-allowed;transform:none}
+
+/* ===== 进度 ===== */
+.progress{display:none;text-align:center;padding:20px}
+.progress.show{display:block}
+.spinner{width:40px;height:40px;border:4px solid #e0e0e0;border-top-color:#1F3864;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.progress .text{font-size:14px;color:#666}
+
+/* ===== 看板区 ===== */
+.dashboard{display:none}
+.dashboard.show{display:block}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px}
+.card{background:#fff;border-radius:12px;padding:20px 24px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.card .label{font-size:13px;color:#888;margin-bottom:6px}
+.card .value{font-size:28px;font-weight:700}
+.card .sub{font-size:12px;margin-top:4px;color:#888}
+.card.warn .value{color:#9C0006}
+.card.good .value{color:#006100}
+.card.highlight .value{color:#9C6500}
+.card.blue .value{color:#1F3864}
+
+.chart-box{background:#fff;border-radius:12px;padding:24px;margin-bottom:24px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.chart-box h3{font-size:16px;margin-bottom:16px;color:#1F3864}
+.bar-chart{display:flex;gap:16px;align-items:flex-end;height:200px;padding:10px 0}
+.bar-group{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px}
+.bar{width:60%;border-radius:6px 6px 0 0;min-height:4px;background:linear-gradient(180deg,#2E5496,#1F3864)}
+.bar-label{font-size:12px;color:#666}
+.bar-value{font-size:11px;font-weight:600}
+
+.tabs{display:flex;margin-bottom:0}
+.tab{padding:12px 28px;background:#e0e0e0;color:#666;cursor:pointer;border-radius:8px 8px 0 0;font-size:14px;font-weight:600;border:none}
+.tab.active{background:#1F3864;color:#fff}
+.tab-content{display:none;background:#fff;border-radius:0 12px 12px 12px;padding:24px;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:24px}
+.tab-content.active{display:block}
+
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:#2E5496;color:#fff;padding:10px 12px;text-align:center;font-weight:600}
+td{padding:8px 12px;text-align:center;border-bottom:1px solid #eee}
+tr:nth-child(even) td{background:#f8fafe}
+.warn-bg{background:#FFC7CE!important;color:#9C0006;font-weight:600}
+.good-bg{background:#C6EFCE!important;color:#006100;font-weight:600}
+.highlight-bg{background:#FFEB9C!important;color:#9C6500;font-weight:600}
+.total-row td{font-weight:700;background:#FFEB9C!important}
+
+.problem-item{background:#fff;border-left:4px solid #1F3864;border-radius:0 8px 8px 0;padding:16px 20px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+.problem-item.p0{border-left-color:#9C0006}
+.problem-item.p1{border-left-color:#FF9900}
+.problem-item .tag{display:inline-block;padding:2px 10px;border-radius:4px;font-size:11px;font-weight:700;margin-right:8px}
+.tag.p0{background:#FFC7CE;color:#9C0006}
+.tag.p1{background:#FFEB9C;color:#9C6500}
+
+.action-card{background:#fff;border-radius:8px;padding:16px 20px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.04);border-left:4px solid #2E5496}
+.action-card.urgent{border-left-color:#9C0006}
+.action-card .header-line{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.action-card .action-title{font-size:14px;font-weight:600}
+.action-card .action-time{font-size:11px;padding:2px 10px;border-radius:4px;background:#FFEB9C;color:#9C6500;font-weight:600}
+.action-card .action-support{font-size:12px;color:#2E5496}
+
+.section-title{font-size:18px;font-weight:700;color:#1F3864;margin:24px 0 16px;padding-left:12px;border-left:4px solid #1F3864}
+.legend{font-size:12px;color:#888;margin-top:8px;padding:16px 0}
+.tip{background:#FFFDE7;border-left:4px solid #FFC107;border-radius:0 8px 8px 0;padding:16px 20px;margin-bottom:24px}
+.tip h4{font-size:13px;color:#F57F17;margin-bottom:6px}
+.tip p{font-size:12px;color:#795548;line-height:1.6}
+
+/* ===== 截图预览 ===== */
+.image-preview{max-width:200px;max-height:100px;border-radius:8px;margin-right:12px;vertical-align:middle}
+
+/* ===== AI 分析区 ===== */
+.ai-section{background:#fff;border-radius:12px;padding:24px;margin-bottom:24px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.ai-section h3{font-size:16px;color:#1F3864;margin-bottom:16px}
+.ai-buttons{display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.btn-ai{background:linear-gradient(135deg,#6C5CE7,#8E7CF6);color:#fff;border:none;padding:12px 24px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:all .3s;box-shadow:0 2px 8px rgba(108,92,231,.3)}
+.btn-ai:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(108,92,231,.4)}
+.btn-ai:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.ai-chat-box{display:flex;gap:8px;margin-bottom:16px}
+.ai-chat-box input{flex:1;padding:10px 14px;border:2px solid #e0e0e0;border-radius:8px;font-size:14px;outline:none;transition:border-color .3s}
+.ai-chat-box input:focus{border-color:#8E7CF6}
+.ai-chat-box button{padding:10px 20px;background:#6C5CE7;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap}
+.ai-chat-box button:disabled{opacity:.5;cursor:not-allowed}
+.ai-result{background:#F8F7FF;border-radius:8px;padding:20px;min-height:60px;font-size:14px;line-height:1.8;color:#333}
+.ai-result.empty{color:#999;text-align:center}
+.ai-result h1,.ai-result h2,.ai-result h3,.ai-result h4{color:#1F3864;margin:12px 0 8px}
+.ai-result h1{font-size:18px}
+.ai-result h2{font-size:16px}
+.ai-result h3{font-size:15px}
+.ai-result h4{font-size:14px}
+.ai-result ul,.ai-result ol{margin:8px 0 8px 20px}
+.ai-result li{margin-bottom:4px}
+.ai-result p{margin:8px 0}
+.ai-result strong{color:#1F3864}
+.ai-result code{background:#e8e8e8;padding:2px 6px;border-radius:4px;font-size:13px}
+.ai-result blockquote{border-left:4px solid #8E7CF6;padding-left:12px;margin:8px 0;color:#666}
+.ai-loading{display:flex;align-items:center;gap:12px;color:#666}
+.ai-loading .spinner{width:24px;height:24px;border-width:3px}
+.ai-error{color:#9C0006;background:#FFC7CE;padding:12px 16px;border-radius:8px}
+.ai-status{font-size:12px;color:#888;margin-top:8px;text-align:right}
+</style>
+</head>
+<body>
+
+<div class="header">
+    <h1>抖音直播投放全维度复盘系统</h1>
+    <p>上传抖音直播后台导出的Excel文件，自动生成三大端口复盘看板</p>
+</div>
+
+<div class="container">
+    <div class="tip">
+        <h4>使用说明</h4>
+        <p>1. 点击或拖拽上传抖音直播后台导出的Excel文件（.xlsx）<br>
+        2. 支持同时上传多个文件，系统自动识别类型（直播间明细 / 全域推广 / 素材数据）<br>
+        3. 文件越多分析越完整，建议上传全部三类以获得最完整的复盘报告<br>
+        4. 所有数据在浏览器本地处理，不上传到任何服务器</p>
+    </div>
+
+    <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+        <div class="icon">📁</div>
+        <div class="title">点击或拖拽Excel文件到此处上传</div>
+        <div class="desc">支持多文件同时上传，系统会自动识别文件类型</div>
+        <div style="margin-top:12px">
+            <span class="format-tag excel">Excel: .xlsx .xls</span>
+        </div>
+    </div>
+    <input type="file" id="fileInput" multiple accept=".xlsx,.xls" style="display:none">
+
+    <div class="file-list" id="fileList">
+        <h3>已上传文件</h3>
+        <div id="fileItems"></div>
+    </div>
+
+    <div class="actions">
+        <button class="btn-analyze" id="btnAnalyze" onclick="startAnalysis()" disabled>开始分析</button>
+    </div>
+
+    <div class="progress" id="progress">
+        <div class="spinner"></div>
+        <div class="text" id="progressText">正在分析数据...</div>
+    </div>
+
+    <div class="dashboard" id="dashboard">
+        <!-- 动态生成 -->
+    </div>
+
+    <div class="ai-section" id="aiSection" style="display:none">
+        <h3>AI 深度分析</h3>
+        <div style="margin-bottom:12px">
+            <input type="password" id="aiApiKey" placeholder="粘贴 DeepSeek API Key（sk-开头）" style="width:100%;padding:10px 14px;border:2px solid #e0e0e0;border-radius:8px;font-size:14px;outline:none;transition:border-color .3s" onfocus="this.style.borderColor='#8E7CF6'" onblur="this.style.borderColor='#e0e0e0'">
+            <div style="font-size:11px;color:#999;margin-top:4px">Key 仅存储在浏览器内存中，不会上传任何服务器。获取地址：platform.deepseek.com → API Keys</div>
+        </div>
+        <div class="ai-buttons">
+            <button class="btn-ai" onclick="callAI('diagnose')" id="btnAIDiagnose">智能诊断</button>
+            <button class="btn-ai" onclick="callAI('optimize')" id="btnAIOptimize">优化建议</button>
+        </div>
+        <div class="ai-chat-box">
+            <input type="text" id="aiQuestion" placeholder="输入自定义问题，如：为什么退款率这么高？" onkeypress="if(event.key==='Enter')callAI('chat')">
+            <button onclick="callAI('chat')" id="btnAIChat">提问</button>
+        </div>
+        <div class="ai-result empty" id="aiResult">上传数据并生成看板后，点击上方按钮进行 AI 深度分析</div>
+    </div>
+</div>
+
+<script>
+// ===================== 全局状态 =====================
+let uploadedFiles = []; // {id, name, type, data:[]}
+
+// ===================== 文件上传处理 =====================
+document.getElementById('fileInput').addEventListener('change', function(e) {
+    handleFiles(e.target.files);
+});
+
+const uploadZone = document.getElementById('uploadZone');
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+uploadZone.addEventListener('drop', e => {
+    e.preventDefault();
+    uploadZone.classList.remove('dragover');
+    handleFiles(e.dataTransfer.files);
+});
+
+function handleFiles(files) {
+    for (let file of files) {
+        if (!file.name.match(/\.(xlsx|xls)$/i)) {
+            alert('请上传Excel文件（.xlsx或.xls）: ' + file.name);
+            continue;
+        }
+        let reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                let data = new Uint8Array(e.target.result);
+                let workbook = XLSX.read(data, {type: 'array'});
+                let sheetName = workbook.SheetNames[0];
+                let sheet = workbook.Sheets[sheetName];
+                let jsonData = XLSX.utils.sheet_to_json(sheet, {header: 0, defval: ''});
+
+                let fileType = identifyFileType(file.name, jsonData);
+                let fileId = 'file_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+
+                uploadedFiles.push({
+                    id: fileId,
+                    name: file.name,
+                    type: fileType,
+                    data: jsonData
+                });
+                renderFileList();
+            } catch(err) {
+                alert('解析文件失败: ' + file.name + ' - ' + err.message);
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    }
+}
+
+function identifyFileType(filename, data) {
+    // 根据文件名判断
+    if (filename.includes('直播间明细') || filename.includes('直播')) return 'live';
+    if (filename.includes('素材')) return 'material';
+    if (filename.includes('全域推广')) return 'ad';
+
+    // 根据列名判断
+    if (data.length > 0) {
+        let cols = Object.keys(data[0]).join(' ');
+        if (cols.includes('直播间观看人数') || cols.includes('直播时长')) return 'live';
+        if (cols.includes('整体展示次数') || cols.includes('追投调控')) return 'material';
+        if (cols.includes('整体消耗') || cols.includes('净成交ROI')) return 'ad';
+    }
+    return 'unknown';
+}
+
+function renderFileList() {
+    let container = document.getElementById('fileItems');
+    let listDiv = document.getElementById('fileList');
+    if (uploadedFiles.length === 0) {
+        listDiv.classList.remove('show');
+        document.getElementById('btnAnalyze').disabled = true;
+        return;
+    }
+    listDiv.classList.add('show');
+    document.getElementById('btnAnalyze').disabled = false;
+    let badgeMap = {live:'直播间明细', ad:'全域推广', material:'素材数据', unknown:'未识别'};
+    container.innerHTML = uploadedFiles.map((f, i) => {
+        return `<div class="file-item">
+            <span class="name">${f.name}</span>
+            <span><span class="badge ${f.type}">${badgeMap[f.type]||f.type}</span> <span class="remove" onclick="removeFile(${i})">×</span></span>
+        </div>`;
+    }).join('');
+}
+
+function removeFile(index) {
+    uploadedFiles.splice(index, 1);
+    renderFileList();
+}
+
+// ===================== 数据解析工具 =====================
+function parseNum(val) {
+    if (val === null || val === undefined || val === '') return null;
+    if (typeof val === 'number') return val;
+    let s = String(val).trim();
+    if (!s || s === '-' || s === '—') return null;
+    let isPercent = false;
+    if (s.endsWith('%')) { isPercent = true; s = s.slice(0, -1).trim(); }
+    s = s.replace(/,/g, '');
+    let num = parseFloat(s);
+    if (isNaN(num)) return null;
+    if (isPercent) num = num / 100;
+    return num;
+}
+
+function findInRecord(record, possibleKeys) {
+    for (let key of possibleKeys) {
+        for (let k in record) {
+            if (k.toLowerCase().includes(key.toLowerCase())) return record[k];
+        }
+    }
+    return null;
+}
+
+function findNum(record, possibleKeys) {
+    return parseNum(findInRecord(record, possibleKeys));
+}
+
+function isTotalRow(rec) {
+    let dateStr = String(rec['日期'] || rec['date'] || '');
+    return dateStr.includes('全部') || dateStr.includes('合计') || dateStr.includes('总计');
+}
+
+function fmt(val, metric) {
+    if (val === null || val === undefined || val === '') return '—';
+    let num = parseNum(val);
+    if (num !== null) {
+        if (metric && metric.includes('率')) {
+            return num < 1 ? (num*100).toFixed(2)+'%' : num.toFixed(2)+'%';
+        }
+        if (metric && metric.includes('ROI')) return num.toFixed(2);
+        if (metric && (metric.includes('金额') || metric.includes('消耗'))) return num.toLocaleString('zh-CN', {minimumFractionDigits:2, maximumFractionDigits:2});
+        if (metric && metric.includes('时长')) return Math.round(num).toString();
+        return num.toLocaleString('zh-CN', {maximumFractionDigits:2});
+    }
+    let s = String(val);
+    return s.length > 30 ? s.substring(0, 30)+'...' : s;
+}
+
+// ===================== 分析逻辑 =====================
+function startAnalysis() {
+    let btn = document.getElementById('btnAnalyze');
+    let progress = document.getElementById('progress');
+    let dashboard = document.getElementById('dashboard');
+
+    btn.disabled = true;
+    progress.classList.add('show');
+    dashboard.classList.remove('show');
+    document.getElementById('progressText').textContent = '正在分析数据...';
+
+    setTimeout(() => {
+        try {
+            // 获取各类型数据
+            let liveData = uploadedFiles.filter(f => f.type === 'live').flatMap(f => f.data);
+            let adData = uploadedFiles.filter(f => f.type === 'ad').flatMap(f => f.data);
+            let materialData = uploadedFiles.filter(f => f.type === 'material').flatMap(f => f.data);
+
+            if (!liveData.length && !adData.length && !materialData.length) {
+                throw new Error('未识别到有效数据文件，请确认上传了正确的抖音直播后台导出的Excel文件');
+            }
+
+            document.getElementById('progressText').textContent = '正在生成看板...';
+
+            setTimeout(() => {
+                let html = generateDashboardHTML(liveData, adData, materialData);
+                dashboard.innerHTML = html;
+                dashboard.classList.add('show');
+                progress.classList.remove('show');
+                btn.disabled = false;
+                document.getElementById('aiSection').style.display = 'block';
+                dashboard.scrollIntoView({behavior:'smooth'});
+            }, 300);
+
+        } catch(err) {
+            document.getElementById('progressText').textContent = '分析失败: ' + err.message;
+            btn.disabled = false;
+            setTimeout(() => progress.classList.remove('show'), 3000);
+        }
+    }, 200);
+}
+
+// ===================== 看板生成 =====================
+function generateDashboardHTML(liveData, adData, materialData) {
+    let now = new Date().toLocaleString('zh-CN');
+
+    // --- 投放汇总 ---
+    let totalCost = 0, totalGMV = 0, avgROI = 0, avgRefund = 0;
+    let adDates = [], adCosts = [];
+
+    if (adData.length) {
+        let totalRec = adData.find(r => isTotalRow(r));
+        let daily = adData.filter(r => !isTotalRow(r));
+
+        if (totalRec) {
+            totalCost = findNum(totalRec, ['整体消耗','消耗','花费']) || 0;
+            totalGMV = findNum(totalRec, ['整体成交金额','成交金额']) || 0;
+            avgROI = findNum(totalRec, ['整体支付ROI','支付ROI','ROI']) || 0;
+            avgRefund = findNum(totalRec, ['1小时内退款率','退款率']) || 0;
+        } else {
+            let costs = [], gmvs = [], rois = [], refunds = [];
+            daily.forEach(r => {
+                let c = findNum(r, ['整体消耗','消耗']); if (c !== null) costs.push(c);
+                let g = findNum(r, ['整体成交金额','成交金额']); if (g !== null) gmvs.push(g);
+                let ro = findNum(r, ['整体支付ROI','支付ROI','ROI']); if (ro !== null) rois.push(ro);
+                let rf = findNum(r, ['1小时内退款率','退款率']); if (rf !== null) refunds.push(rf);
+            });
+            totalCost = costs.reduce((a,b)=>a+b, 0);
+            totalGMV = gmvs.reduce((a,b)=>a+b, 0);
+            avgROI = rois.length ? rois.reduce((a,b)=>a+b,0)/rois.length : 0;
+            avgRefund = refunds.length ? refunds.reduce((a,b)=>a+b,0)/refunds.length : 0;
+        }
+
+        daily.forEach(r => {
+            let d = String(r['日期']||r['date']||'').substring(0,10);
+            let c = findNum(r, ['整体消耗','消耗']) || 0;
+            adDates.push(d); adCosts.push(c);
+        });
+    }
+
+    // --- 直播间汇总 ---
+    let liveViews = 0, livePeak = 0, liveComments = 0, liveFollowers = 0, liveGMV = 0;
+    if (liveData.length) {
+        liveData.forEach(r => {
+            let v = findNum(r, ['直播间观看人数','观看人数']); if (v !== null) liveViews += v;
+            v = findNum(r, ['最高在线人数']); if (v !== null && v > livePeak) livePeak = v;
+            v = findNum(r, ['评论次数']); if (v !== null) liveComments += v;
+            v = findNum(r, ['新增粉丝数']); if (v !== null) liveFollowers += v;
+            v = findNum(r, ['直播间成交金额','成交金额']); if (v !== null) liveGMV += v;
+        });
+    }
+
+    // --- 素材汇总 ---
+    let matShows = 0, matClicks = 0, matCTR = 0, matGMV = 0, matCost = 0, matROI = 0;
+    if (materialData.length) {
+        let totalRec = materialData.find(r => isTotalRow(r));
+        let daily = materialData.filter(r => !isTotalRow(r));
+        if (totalRec) {
+            matShows = findNum(totalRec, ['整体展示次数','展示次数']) || 0;
+            matClicks = findNum(totalRec, ['整体点击次数','点击次数']) || 0;
+            matGMV = findNum(totalRec, ['整体成交金额','成交金额']) || 0;
+            matCost = findNum(totalRec, ['整体消耗','消耗']) || 0;
+            let ctr = findNum(totalRec, ['整体点击率','点击率']);
+            matCTR = ctr !== null ? ctr * 100 : (matShows ? matClicks/matShows*100 : 0);
+            let roi = findNum(totalRec, ['净成交ROI','净ROI']);
+            matROI = roi !== null ? roi : (matCost ? matGMV/matCost : 0);
+        } else {
+            let s=[],c=[],g=[],co=[];
+            daily.forEach(r => {
+                let v; v=findNum(r,['整体展示次数','展示次数']); if(v!==null) s.push(v);
+                v=findNum(r,['整体点击次数','点击次数']); if(v!==null) c.push(v);
+                v=findNum(r,['整体成交金额','成交金额']); if(v!==null) g.push(v);
+                v=findNum(r,['整体消耗','消耗']); if(v!==null) co.push(v);
+            });
+            matShows=s.reduce((a,b)=>a+b,0); matClicks=c.reduce((a,b)=>a+b,0);
+            matGMV=g.reduce((a,b)=>a+b,0); matCost=co.reduce((a,b)=>a+b,0);
+            matCTR = matShows ? matClicks/matShows*100 : 0;
+            matROI = matCost ? matGMV/matCost : 0;
+        }
+    }
+
+    // --- 生成HTML ---
+    let roiClass = avgROI < 1.5 ? 'warn' : 'highlight';
+    let refundClass = avgRefund > 0.15 ? 'warn' : 'good';
+
+    let cardsHTML = `
+    <div class="cards">
+        <div class="card blue"><div class="label">投放总消耗</div><div class="value">¥${totalCost.toLocaleString('zh-CN',{maximumFractionDigits:0})}</div><div class="sub">全域推广合计</div></div>
+        <div class="card good"><div class="label">成交总金额</div><div class="value">¥${totalGMV.toLocaleString('zh-CN',{maximumFractionDigits:0})}</div><div class="sub">支付口径</div></div>
+        <div class="card ${roiClass}"><div class="label">支付ROI</div><div class="value">${avgROI.toFixed(2)}</div><div class="sub">成交金额/消耗</div></div>
+        <div class="card ${refundClass}"><div class="label">平均退款率</div><div class="value">${(avgRefund*100).toFixed(1)}%</div><div class="sub">退款率越低越好</div></div>
+        ${liveData.length ? `<div class="card blue"><div class="label">直播间观看人数</div><div class="value">${liveViews.toLocaleString('zh-CN')}</div><div class="sub">去重观看</div></div>` : ''}
+        ${liveData.length ? `<div class="card blue"><div class="label">最高在线</div><div class="value">${livePeak.toLocaleString('zh-CN')}</div><div class="sub">峰值同时在线</div></div>` : ''}
+        ${materialData.length ? `<div class="card blue"><div class="label">素材点击率</div><div class="value">${matCTR.toFixed(2)}%</div><div class="sub">点击/展示</div></div>` : ''}
+        ${materialData.length ? `<div class="card highlight"><div class="label">素材ROI</div><div class="value">${matROI.toFixed(2)}</div><div class="sub">素材成交/消耗</div></div>` : ''}
+    </div>`;
+
+    // 分日趋势图
+    let chartHTML = '';
+    if (adCosts.length) {
+        let maxCost = Math.max(...adCosts);
+        chartHTML = `<div class="chart-box"><h3>分日投放趋势</h3><div class="bar-chart">${adCosts.map((c,i) => {
+            let h = maxCost ? Math.max(4, c/maxCost*180) : 4;
+            return `<div class="bar-group"><div class="bar-value">¥${c.toLocaleString('zh-CN',{maximumFractionDigits:0})}</div><div class="bar" style="height:${h}px"></div><div class="bar-label">${adDates[i]}</div></div>`;
+        }).join('')}</div></div>`;
+    }
+
+    // Tab内容
+    let tabsHTML = `
+    <div class="tabs">
+        ${materialData.length ? '<button class="tab active" onclick="switchTab(event,\'material\')">内容素材端口</button>' : ''}
+        ${liveData.length ? `<button class="tab ${materialData.length ? '' : 'active'}" onclick="switchTab(event,'live')">直播间直播端口</button>` : ''}
+        ${adData.length ? `<button class="tab ${!materialData.length && !liveData.length ? 'active' : ''}" onclick="switchTab(event,'ad')">千川投放端口</button>` : ''}
+    </div>`;
+
+    let materialTab = materialData.length ? `
+    <div class="tab-content ${materialData.length ? 'active' : ''}" id="tab-material">
+        <div class="section-title">素材整体表现</div>
+        ${generateTableHTML(materialData, [
+            ['展示次数',['整体展示次数','展示次数']],
+            ['点击次数',['整体点击次数','点击次数']],
+            ['点击率',['整体点击率','点击率']],
+            ['转化率',['整体转化率','转化率']],
+            ['成交订单数',['整体成交订单数','成交订单数']],
+            ['成交金额',['整体成交金额','成交金额']],
+            ['素材消耗',['整体消耗','消耗']],
+            ['净成交ROI',['净成交ROI','净ROI']],
+            ['退款率',['1小时内退款率','退款率']],
+        ], true)}
+        <div class="section-title">追投调控 vs 基础投放</div>
+        ${generateZhuirouTable(materialData)}
+    </div>` : '';
+
+    let liveTab = liveData.length ? `
+    <div class="tab-content ${!materialData.length ? 'active' : ''}" id="tab-live">
+        <div class="section-title">直播间场域数据对比</div>
+        ${generateTableHTML(liveData, [
+            ['直播时长(秒)',['直播时长（秒）','直播时长']],
+            ['观看人数',['直播间观看人数','观看人数']],
+            ['观看人次',['直播间观看人次','观看人次']],
+            ['最高在线人数',['最高在线人数']],
+            ['平均在线人数',['平均在线人数']],
+            ['人均观看时长(秒)',['人均观看时长']],
+            ['评论次数',['评论次数']],
+            ['新增粉丝数',['新增粉丝数']],
+            ['成交金额',['直播间成交金额','成交金额']],
+            ['成交订单数',['直播间成交订单数','成交订单数']],
+            ['商品点击率(人数)',['商品点击率(人数)']],
+            ['点击成交转化率(人数)',['点击成交转化率(人数)']],
+        ], false)}
+        <div class="section-title">互动数据</div>
+        ${generateInteractTable(liveData)}
+    </div>` : '';
+
+    let adTab = adData.length ? `
+    <div class="tab-content ${!materialData.length && !liveData.length ? 'active' : ''}" id="tab-ad">
+        <div class="section-title">投放计划分日表现</div>
+        ${generateAdTable(adData)}
+        <div class="section-title">千川撬动自然流效果</div>
+        ${generateNaturalFlowTable(adData, liveData)}
+    </div>` : '';
+
+    // 问题总结
+    let problemsHTML = generateProblems(adData, liveData, materialData);
+
+    // 优化方案
+    let actionsHTML = generateActions(adData, liveData, materialData);
+
+    return `
+    <div class="section-title">核心指标总览</div>
+    ${cardsHTML}
+    ${chartHTML}
+    ${tabsHTML}
+    ${materialTab}${liveTab}${adTab}
+    <div class="section-title">核心问题总结</div>
+    ${problemsHTML}
+    <div class="section-title">落地优化执行方案</div>
+    ${actionsHTML}
+    <div class="legend">
+        图例：<span style="background:#FFC7CE;padding:2px 8px;border-radius:4px;color:#9C0006;">浅红=负向预警</span>
+        <span style="background:#C6EFCE;padding:2px 8px;border-radius:4px;color:#006100;margin-left:8px;">浅绿=正向优秀</span>
+        <span style="background:#FFEB9C;padding:2px 8px;border-radius:4px;color:#9C6500;margin-left:8px;">浅黄=关键指标/立即执行</span>
+    </div>
+    <div style="text-align:center;padding:24px;color:#999;font-size:12px">生成时间：${now} | 数据在浏览器本地处理</div>`;
+}
+
+function switchTab(e, name) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    e.target.classList.add('active');
+    document.getElementById('tab-' + name).classList.add('active');
+}
+
+function generateTableHTML(data, keys, hasTotal) {
+    let totalRec = data.find(r => isTotalRow(r));
+    let daily = data.filter(r => !isTotalRow(r));
+    let display = daily.length ? daily : data;
+
+    let headers = '<tr><th>指标</th>';
+    display.forEach((r,i) => {
+        let d = String(r['日期']||r['date']||('第'+(i+1)+'天')).substring(0,10);
+        headers += `<th>${d}</th>`;
+    });
+    if (hasTotal) headers += '<th>合计/均值</th>';
+    headers += '</tr>';
+
+    let rows = '';
+    keys.forEach(([name, pkeys]) => {
+        rows += `<tr><td>${name}</td>`;
+        display.forEach(r => {
+            let v = findInRecord(r, pkeys);
+            let cls = '';
+            if (name.includes('转化率')) cls = ' class="warn-bg"';
+            if (name.includes('ROI')) cls = ' class="highlight-bg"';
+            rows += `<td${cls}>${fmt(v, name)}</td>`;
+        });
+        if (hasTotal) {
+            let totalStr = '—';
+            if (totalRec) {
+                totalStr = fmt(findInRecord(totalRec, pkeys), name);
+            } else {
+                let nums = display.map(r => findNum(r, pkeys)).filter(n => n !== null);
+                if (nums.length) {
+                    if (name.includes('率') || name.includes('ROI')) {
+                        totalStr = fmt(nums.reduce((a,b)=>a+b,0)/nums.length, name);
+                    } else {
+                        totalStr = fmt(nums.reduce((a,b)=>a+b,0), name);
+                    }
+                }
+            }
+            let cls = '';
+            if (name.includes('转化率')) cls = ' class="warn-bg"';
+            if (name.includes('ROI')) cls = ' class="highlight-bg"';
+            rows += `<td${cls}>${totalStr}</td>`;
+        }
+        rows += '</tr>';
+    });
+
+    return `<table><thead>${headers}</thead><tbody>${rows}</tbody></table>`;
+}
+
+function generateZhuirouTable(materialData) {
+    let totalRec = materialData.find(r => isTotalRow(r));
+    if (!totalRec) {
+        let baseCost=0, zhuirouCost=0, zhuirouGMV=0, zhuirouROI=null, totalCost=0, totalGMV=0, totalROI=null;
+        materialData.filter(r => !isTotalRow(r)).forEach(r => {
+            let bc=findNum(r,['基础消耗']); if(bc!==null) baseCost+=bc;
+            let zc=findNum(r,['追投调控消耗']); if(zc!==null) zhuirouCost+=zc;
+            let zg=findNum(r,['追投调控成交金额']); if(zg!==null) zhuirouGMV+=zg;
+            let tc=findNum(r,['整体消耗']); if(tc!==null) totalCost+=tc;
+            let tg=findNum(r,['整体成交金额']); if(tg!==null) totalGMV+=tg;
+        });
+        totalROI = totalCost ? totalGMV/totalCost : 0;
+        zhuirouROI = zhuirouCost ? findNum(materialData[0],['追投调控净成交ROI']) : null;
+        return `<table><thead><tr><th>投放类型</th><th>消耗</th><th>成交金额</th><th>净ROI</th><th>退款率</th></tr></thead><tbody>
+        <tr><td>基础素材投放</td><td>¥${baseCost.toLocaleString('zh-CN',{maximumFractionDigits:0})}</td><td>—</td><td>—</td><td>—</td></tr>
+        <tr><td>追投调控</td><td>¥${zhuirouCost.toLocaleString('zh-CN',{maximumFractionDigits:0})}</td><td>¥${zhuirouGMV.toLocaleString('zh-CN',{maximumFractionDigits:0})}</td><td class="warn-bg">${zhuirouROI!==null?zhuirouROI.toFixed(2):'—'}</td><td>—</td></tr>
+        <tr><td>素材整体</td><td>¥${totalCost.toLocaleString('zh-CN',{maximumFractionDigits:0})}</td><td>¥${totalGMV.toLocaleString('zh-CN',{maximumFractionDigits:0})}</td><td class="highlight-bg">${totalROI.toFixed(2)}</td><td>—</td></tr>
+        </tbody></table>`;
+    }
+
+    let baseCost = findNum(totalRec, ['基础消耗']) || 0;
+    let zhuirouCost = findNum(totalRec, ['追投调控消耗']) || 0;
+    let zhuirouGMV = findNum(totalRec, ['追投调控成交金额']) || 0;
+    let zhuirouROI = findNum(totalRec, ['追投调控净成交ROI']);
+    let zhuirouRefund = findNum(totalRec, ['追投调控1小时内退款率']);
+    let totalCost = findNum(totalRec, ['整体消耗']) || 0;
+    let totalGMV = findNum(totalRec, ['整体成交金额']) || 0;
+    let totalROI = findNum(totalRec, ['净成交ROI']);
+    let totalRefund = findNum(totalRec, ['1小时内退款率']);
+
+    let zhuirouROICls = (zhuirouROI !== null && zhuirouROI < 1.6) ? ' class="warn-bg"' : '';
+    let zhuirouRefundCls = (zhuirouRefund !== null && zhuirouRefund > 0.12) ? ' class="warn-bg"' : '';
+    let totalRefundCls = (totalRefund !== null && totalRefund > 0.10) ? ' class="warn-bg"' : '';
+
+    return `<table><thead><tr><th>投放类型</th><th>消耗</th><th>成交金额</th><th>净ROI</th><th>退款率</th></tr></thead><tbody>
+    <tr><td>基础素材投放</td><td>¥${baseCost.toLocaleString('zh-CN',{maximumFractionDigits:0})}</td><td>—</td><td>—</td><td>—</td></tr>
+    <tr><td>追投调控</td><td>¥${zhuirouCost.toLocaleString('zh-CN',{maximumFractionDigits:0})}</td><td>¥${zhuirouGMV.toLocaleString('zh-CN',{maximumFractionDigits:0})}</td><td${zhuirouROICls}>${fmt(zhuirouROI,'ROI')}</td><td${zhuirouRefundCls}>${fmt(zhuirouRefund,'率')}</td></tr>
+    <tr><td>素材整体</td><td>¥${totalCost.toLocaleString('zh-CN',{maximumFractionDigits:0})}</td><td>¥${totalGMV.toLocaleString('zh-CN',{maximumFractionDigits:0})}</td><td class="highlight-bg">${fmt(totalROI,'ROI')}</td><td${totalRefundCls}>${fmt(totalRefund,'率')}</td></tr>
+    </tbody></table>`;
+}
+
+function generateInteractTable(liveData) {
+    let keys = [
+        ['评论次数',['评论次数'],'—'],
+        ['新增粉丝数',['新增粉丝数'],'—'],
+        ['看播粉丝占比',['看播粉丝占比'],'≥5%'],
+        ['成交粉丝占比',['成交粉丝占比'],'—'],
+        ['人均观看时长(秒)',['人均观看时长'],'90-120秒'],
+    ];
+    let headers = '<tr><th>指标</th>';
+    liveData.forEach((r,i) => headers += `<th>场次${i+1}</th>`);
+    headers += '<th>健康基准</th><th>达标判断</th></tr>';
+
+    let rows = '';
+    keys.forEach(([name, pkeys, benchmark]) => {
+        rows += `<tr><td>${name}</td>`;
+        liveData.forEach(r => { rows += `<td>${fmt(findInRecord(r,pkeys),name)}</td>`; });
+        let judge = '待评估', cls = '';
+        if (name.includes('看播粉丝占比')) {
+            let nums = liveData.map(r => findNum(r, pkeys)).filter(n => n !== null);
+            if (nums.length) { let avg = nums.reduce((a,b)=>a+b,0)/nums.length; judge = avg < 0.05 ? '不达标' : '达标'; cls = avg < 0.05 ? ' class="warn-bg"' : ' class="good-bg"'; }
+        }
+        if (name.includes('人均观看时长')) {
+            let nums = liveData.map(r => findNum(r, pkeys)).filter(n => n !== null);
+            if (nums.length) { let avg = nums.reduce((a,b)=>a+b,0)/nums.length; judge = avg < 90 ? '不达标' : '达标'; cls = avg < 90 ? ' class="warn-bg"' : ' class="good-bg"'; }
+        }
+        rows += `<td>${benchmark}</td><td${cls}>${judge}</td></tr>`;
+    });
+    return `<table><thead>${headers}</thead><tbody>${rows}</tbody></table>`;
+}
+
+function generateAdTable(adData) {
+    let headers = '<tr><th>日期</th><th>消耗</th><th>成交金额</th><th>支付ROI</th><th>净ROI</th><th>退款率</th><th>判定</th></tr>';
+    let rows = '';
+    adData.forEach(r => {
+        let d = String(r['日期']||r['date']||'').substring(0,10);
+        let cost = findNum(r, ['整体消耗','消耗']);
+        let gmv = findNum(r, ['整体成交金额','成交金额']);
+        let roi = findNum(r, ['整体支付ROI','支付ROI','ROI']);
+        let netROI = findNum(r, ['净成交ROI','净ROI']);
+        let refund = findNum(r, ['1小时内退款率','退款率']);
+        let judgment = '—', roiCls = '', refundCls = '';
+        if (netROI !== null) {
+            if (netROI < 1.2) { judgment = '亏损'; roiCls = ' class="warn-bg"'; }
+            else if (netROI > 1.6) { judgment = '盈利'; roiCls = ' class="good-bg"'; }
+            else { judgment = '微利'; roiCls = ' class="highlight-bg"'; }
+        }
+        if (refund !== null && refund > 0.15) refundCls = ' class="warn-bg"';
+        let totalCls = isTotalRow(r) ? ' class="total-row"' : '';
+        rows += `<tr${totalCls}><td>${d}</td><td>${fmt(cost,'消耗')}</td><td>${fmt(gmv,'金额')}</td><td>${fmt(roi,'ROI')}</td><td${roiCls}>${fmt(netROI,'ROI')}</td><td${refundCls}>${fmt(refund,'率')}</td><td>${judgment}</td></tr>`;
+    });
+    return `<table><thead>${headers}</thead><tbody>${rows}</tbody></table>`;
+}
+
+function generateNaturalFlowTable(adData, liveData) {
+    let dailyAd = adData.filter(r => !isTotalRow(r));
+    let dailyLive = liveData || [];
+    let maxCols = Math.max(dailyAd.length, dailyLive.length, 2);
+
+    let headers = '<tr><th>指标</th>';
+    for (let i = 0; i < maxCols; i++) {
+        let d = '';
+        if (i < dailyAd.length) d = String(dailyAd[i]['日期']||'').substring(0,10);
+        else if (i < dailyLive.length) d = String(dailyLive[i]['开播时间']||'').substring(0,10);
+        headers += `<th>${d||('日期'+(i+1))}</th>`;
+    }
+    headers += '<th>评估</th></tr>';
+
+    let costRow = '<tr><td>投放消耗</td>';
+    dailyAd.forEach(r => { let c = findNum(r,['整体消耗','消耗']); costRow += `<td>${c!==null?'¥'+c.toLocaleString('zh-CN',{maximumFractionDigits:0}):'—'}</td>`; });
+    for (let i = dailyAd.length; i < maxCols; i++) costRow += '<td>—</td>';
+    costRow += '<td>—</td></tr>';
+
+    let viewRow = '<tr><td>观看人次</td>';
+    dailyLive.forEach(r => { let v = findNum(r,['直播间观看人次','观看人次']); viewRow += `<td>${v!==null?Math.round(v).toLocaleString('zh-CN'):'—'}</td>`; });
+    for (let i = dailyLive.length; i < maxCols; i++) viewRow += '<td>—</td>';
+    viewRow += '<td>—</td></tr>';
+
+    let fanRow = '<tr><td>看播粉丝占比</td>';
+    dailyLive.forEach(r => { let f = findNum(r,['看播粉丝占比']); fanRow += `<td class="warn-bg">${f!==null?(f*100).toFixed(2)+'%':'—'}</td>`; });
+    for (let i = dailyLive.length; i < maxCols; i++) fanRow += '<td class="warn-bg">—</td>';
+    fanRow += '<td class="warn-bg">需根据数据评估</td></tr>';
+
+    let followerRow = '<tr><td>新增粉丝数</td>';
+    dailyLive.forEach(r => { let f = findNum(r,['新增粉丝数']); followerRow += `<td>${f!==null?Math.round(f).toLocaleString('zh-CN'):'—'}</td>`; });
+    for (let i = dailyLive.length; i < maxCols; i++) followerRow += '<td>—</td>';
+    followerRow += '<td>—</td></tr>';
+
+    return `<table><thead>${headers}</thead><tbody>${costRow}${viewRow}${fanRow}${followerRow}</tbody></table>`;
+}
+
+function generateProblems(adData, liveData, materialData) {
+    let problems = [];
+    let fanLow=false, watchLow=false, refundHigh=false, scalingBad=false, hasLoss=false, matDecay=false, matCostLow=false, zhuirouLow=false, longLive=false;
+
+    if (liveData.length) {
+        liveData.forEach(r => {
+            let fr = findNum(r, ['看播粉丝占比']); if (fr !== null && fr < 0.05) fanLow = true;
+            let wt = findNum(r, ['人均观看时长']); if (wt !== null && wt < 90) watchLow = true;
+            let dur = findNum(r, ['直播时长（秒）','直播时长']); if (dur !== null && dur > 36000) longLive = true;
+        });
+    }
+    if (adData.length) {
+        let daily = adData.filter(r => !isTotalRow(r));
+        let rois=[], refunds=[], costs=[];
+        daily.forEach(r => {
+            let rf = findNum(r, ['1小时内退款率','退款率']); if (rf !== null) refunds.push(rf);
+            let roi = findNum(r, ['净成交ROI','净ROI']); if (roi !== null) { rois.push(roi); if (roi < 1.2) hasLoss = true; }
+            let c = findNum(r, ['整体消耗','消耗']); if (c !== null) costs.push(c);
+        });
+        if (refunds.length && Math.max(...refunds) > 0.15) refundHigh = true;
+        if (rois.length >= 2 && rois[rois.length-1] < rois[0]) scalingBad = true;
+    }
+    if (materialData.length) {
+        let totalRec = materialData.find(r => isTotalRow(r));
+        if (totalRec) {
+            let zr = findNum(totalRec, ['追投调控净成交ROI']);
+            let br = findNum(totalRec, ['净成交ROI']);
+            if (zr !== null && br !== null && zr < br) zhuirouLow = true;
+            let mc = findNum(totalRec, ['整体消耗']);
+            if (mc !== null && adData.length) {
+                let ac = null;
+                let adTotal = adData.find(r => isTotalRow(r));
+                if (adTotal) ac = findNum(adTotal, ['整体消耗']);
+                if (ac !== null && ac > 0 && mc / ac < 0.30) matCostLow = true;
+            }
+        }
+        let daily = materialData.filter(r => !isTotalRow(r));
+        let valid = daily.filter(r => { let s = findNum(r, ['整体展示次数','展示次数']); return s !== null && s > 0; });
+        if (valid.length >= 2) {
+            let r0 = findNum(valid[0], ['净成交ROI']);
+            let r1 = findNum(valid[valid.length-1], ['净成交ROI']);
+            if (r0 !== null && r1 !== null && r1 < r0) matDecay = true;
+        }
+    }
+
+    if (fanLow) problems.push(['流量','付费依赖严重，自然流撬动质量差','看播粉丝占比低于5%，几乎100%依赖付费流量','高','P0']);
+    if (watchLow) problems.push(['流量','人均观看时长偏短，用户快速流失','低于健康值90-120秒','高','P0']);
+    if (refundHigh) problems.push(['转化','退款率恶化导致净成交缩水','退款率持续上升或超过15%','高','P0']);
+    if (scalingBad) problems.push(['投放','放量即降效，边际效率递减','消耗放大但ROI下降','高','P0']);
+    if (hasLoss) problems.push(['投放','存在亏损日，需立即关停低效计划','净ROI低于1.2','高','P0']);
+    if (matDecay) problems.push(['素材','素材放量后快速衰减','ROI和转化率随放量下降','高','P0']);
+    problems.push(['素材','素材库厚度不足无替补','需补充新素材轮换机制','高','P0']);
+    if (longLive) problems.push(['流量','超长直播中后段大量空播','直播时长超过10小时，边际产出极低','中','P1']);
+    if (zhuirouLow) problems.push(['投放','追投调控引入低质流量','追投净ROI低于基础投放','中','P1']);
+    if (matCostLow) problems.push(['素材','素材消耗占比偏低','素材消耗占比不足30%','中','P1']);
+    if (problems.length < 5) {
+        problems.push(['转化','商品点击率需关注','曝光放大后用户兴趣度可能下降','中','P1']);
+        problems.push(['流量','互动冷清影响自然流分发','评论互动率偏低','中','P1']);
+    }
+
+    return problems.map(([dim, title, desc, impact, priority]) => {
+        let cls = priority === 'P0' ? 'p0' : 'p1';
+        return `<div class="problem-item ${cls}"><span class="tag ${cls}">${priority}</span><span style="font-size:14px;font-weight:600">[${dim}] ${title}</span><div style="font-size:12px;color:#666;margin-top:4px">${desc} | 影响程度：${impact}</div></div>`;
+    }).join('');
+}
+
+function generateActions(adData, liveData, materialData) {
+    let actions = [];
+    let hasLoss=false, refundHigh=false, zhuirouLow=false, matDecay=false, matCostLow=false, watchLow=false, longLive=false, highPrice=false, lowInteract=false;
+
+    if (adData.length) {
+        adData.filter(r => !isTotalRow(r)).forEach(r => {
+            let roi = findNum(r, ['净成交ROI']); if (roi !== null && roi < 1.2) hasLoss = true;
+            let rf = findNum(r, ['1小时内退款率','退款率']); if (rf !== null && rf > 0.15) refundHigh = true;
+        });
+    }
+    if (liveData.length) {
+        liveData.forEach(r => {
+            let wt = findNum(r, ['人均观看时长']); if (wt !== null && wt < 90) watchLow = true;
+            let dur = findNum(r, ['直播时长（秒）','直播时长']); if (dur !== null && dur > 36000) longLive = true;
+            let up = findNum(r, ['成交件单价']); if (up !== null && up > 150) highPrice = true;
+            let cm = findNum(r, ['评论次数']); let vw = findNum(r, ['直播间观看人数','观看人数']);
+            if (cm !== null && vw !== null && vw > 0 && cm / vw < 0.02) lowInteract = true;
+        });
+    }
+    if (materialData.length) {
+        let totalRec = materialData.find(r => isTotalRow(r));
+        if (totalRec) {
+            let zr = findNum(totalRec, ['追投调控净成交ROI']);
+            let br = findNum(totalRec, ['净成交ROI']);
+            if (zr !== null && br !== null && zr < br) zhuirouLow = true;
+            let mc = findNum(totalRec, ['整体消耗']);
+            if (mc !== null && mc > 0) matCostLow = true;
+        }
+        let daily = materialData.filter(r => !isTotalRow(r));
+        let valid = daily.filter(r => { let s = findNum(r, ['整体展示次数']); return s !== null && s > 0; });
+        if (valid.length >= 2) {
+            let r0 = findNum(valid[0], ['净成交ROI']);
+            let r1 = findNum(valid[valid.length-1], ['净成交ROI']);
+            if (r0 !== null && r1 !== null && r1 < r0) matDecay = true;
+        }
+    }
+
+    actions.push(['素材优化','新建2-3条产品功效深度种草素材','CTR达标但转化率偏低，前端引流强但种草不足','下场直播前']);
+    actions.push(['素材优化','新建1-2条直播间福利预告素材','商品点击率下降，用户进直播间后商品兴趣降低','下场直播前']);
+    if (matDecay) actions.push(['素材优化','保留高效素材持续跑量，新老素材6:4配比','素材放量后ROI衰减，需轮换延缓疲劳','立即执行']);
+    else actions.push(['素材优化','建立素材轮换机制，新老素材6:4配比','防止单一素材疲劳衰减','立即执行']);
+    if (matCostLow) actions.push(['素材优化','素材消耗占比从当前提升至35%+','素材资金效率高于直投直播间','下场直播起']);
+    if (longLive) actions.push(['直播间优化','压缩直播时长至6-8小时','超长直播边际产出极低','下场直播起']);
+    if (highPrice) actions.push(['直播间优化','增加1-2款低客单引流款(39-69元)','件单价偏高可能抑制转化','下场直播前']);
+    if (refundHigh) actions.push(['直播间优化','话术明确标注到手价和对比日常价','退款率高企，冲动下单后大量退款','立即执行']);
+    if (lowInteract) actions.push(['直播间优化','每15分钟互动抽奖/福袋引导评论','互动冷清影响自然流分发权重','立即执行']);
+    if (watchLow) actions.push(['直播间优化','前15秒完成身份+福利+紧迫感话术','人均观看时长偏短，用户快速流失','立即执行']);
+    actions.push(['直播间优化','排品节奏：引流款→爆款→组合装循环','优化商品点击率和客单价','下场直播起']);
+    if (hasLoss) actions.push(['千川投放','立即关停低效亏损计划','净ROI<1.2且退款率>15%的计划明确亏损','立即执行']);
+    if (zhuirouLow) actions.push(['千川投放','追投调控设置ROI下限1.8+','追投ROI低于基础投放，引入低质流量','下场直播起']);
+    actions.push(['千川投放','70%预算集中高效时段，30%测试新素材','放量即降效，需控速投放','下场直播起']);
+    actions.push(['千川投放','分时段控速投放，每2小时评估ROI','单日集中放量导致降效','立即执行']);
+    if (refundHigh) actions.push(['千川投放','设置退款率监控阈值15%','退款率持续恶化需自动降预算','下场直播起']);
+    actions.push(['千川投放','直播后24h内发粉丝专属优惠券','粉丝不回流，看播粉丝占比极低','下场直播后']);
+
+    return actions.map(([dir, title, support, timing]) => {
+        let urgent = timing.includes('立即执行') ? 'urgent' : '';
+        return `<div class="action-card ${urgent}"><div class="header-line"><span class="action-title">[${dir}] ${title}</span><span class="action-time">${timing}</span></div><div class="action-support">数据支撑：${support}</div></div>`;
+    }).join('');
+}
+
+// ===================== AI 深度分析 =====================
+
+// 提取关键指标摘要，发送给AI（只发摘要，不发原始数据）
+function extractMetricsSummary(liveData, adData, materialData) {
+    let m = {};
+
+    // 千川投放端
+    if (adData.length) {
+        let totalRec = adData.find(r => isTotalRow(r));
+        let daily = adData.filter(r => !isTotalRow(r));
+        if (totalRec) {
+            m['投放总消耗'] = '¥' + (findNum(totalRec, ['整体消耗','消耗']) || 0).toLocaleString('zh-CN', {maximumFractionDigits: 2});
+            m['成交总金额'] = '¥' + (findNum(totalRec, ['整体成交金额','成交金额']) || 0).toLocaleString('zh-CN', {maximumFractionDigits: 2});
+            m['净成交金额'] = '¥' + (findNum(totalRec, ['净成交金额']) || 0).toLocaleString('zh-CN', {maximumFractionDigits: 2});
+            m['整体支付ROI'] = (findNum(totalRec, ['整体支付ROI','支付ROI','ROI']) || 0).toFixed(2);
+            m['净成交ROI'] = (findNum(totalRec, ['净成交ROI','净ROI']) || 0).toFixed(2);
+            m['整体退款率'] = ((findNum(totalRec, ['1小时内退款率','退款率']) || 0) * 100).toFixed(2) + '%';
+            m['成交订单数'] = findNum(totalRec, ['整体成交订单数','成交订单数']) || 0;
+            m['净成交订单数'] = findNum(totalRec, ['净成交订单数']) || 0;
+            m['净成交金额结算率'] = findNum(totalRec, ['净成交金额结算率']);
+        }
+        if (daily.length) {
+            m['投放天数'] = daily.length;
+            m['分日消耗'] = daily.map(r => {
+                let d = String(r['日期']||'').substring(0,10);
+                let c = findNum(r, ['整体消耗','消耗']) || 0;
+                return d + ': ¥' + c.toLocaleString('zh-CN', {maximumFractionDigits: 0});
+            }).join(', ');
+            m['分日净ROI'] = daily.map(r => {
+                let d = String(r['日期']||'').substring(0,10);
+                let roi = findNum(r, ['净成交ROI','净ROI']);
+                return d + ': ' + (roi !== null ? roi.toFixed(2) : '无数据');
+            }).join(', ');
+            m['分日退款率'] = daily.map(r => {
+                let d = String(r['日期']||'').substring(0,10);
+                let rf = findNum(r, ['1小时内退款率','退款率']);
+                return d + ': ' + (rf !== null ? (rf*100).toFixed(1)+'%' : '无数据');
+            }).join(', ');
+        }
+    }
+
+    // 直播间端
+    if (liveData.length) {
+        m['直播场次'] = liveData.length;
+        let views = 0, peak = 0, comments = 0, followers = 0, gmv = 0;
+        liveData.forEach(r => {
+            let v;
+            v = findNum(r, ['直播间观看人数','观看人数']); if (v !== null) views += v;
+            v = findNum(r, ['最高在线人数']); if (v !== null && v > peak) peak = v;
+            v = findNum(r, ['评论次数']); if (v !== null) comments += v;
+            v = findNum(r, ['新增粉丝数']); if (v !== null) followers += v;
+            v = findNum(r, ['直播间成交金额','成交金额']); if (v !== null) gmv += v;
+        });
+        m['直播间总观看人数'] = views.toLocaleString('zh-CN');
+        m['最高在线人数'] = peak.toLocaleString('zh-CN');
+        m['总评论次数'] = comments.toLocaleString('zh-CN');
+        m['总新增粉丝'] = followers.toLocaleString('zh-CN');
+        m['直播间总成交金额'] = '¥' + gmv.toLocaleString('zh-CN', {maximumFractionDigits: 0});
+        // 场次明细
+        m['直播场次明细'] = liveData.map((r, i) => {
+            let parts = [];
+            let dur = findNum(r, ['直播时长（秒）','直播时长']);
+            if (dur !== null) parts.push('时长' + Math.round(dur/3600) + 'h');
+            let wt = findNum(r, ['人均观看时长']);
+            if (wt !== null) parts.push('人均观看' + Math.round(wt) + 's');
+            let fan = findNum(r, ['看播粉丝占比']);
+            if (fan !== null) parts.push('看播粉丝占比' + (fan*100).toFixed(2) + '%');
+            let ctr = findNum(r, ['商品点击率(人数)']);
+            if (ctr !== null) parts.push('商品点击率' + (ctr*100).toFixed(2) + '%');
+            let cvr = findNum(r, ['点击成交转化率(人数)']);
+            if (cvr !== null) parts.push('成交转化率' + (cvr*100).toFixed(2) + '%');
+            let up = findNum(r, ['成交件单价']);
+            if (up !== null) parts.push('件单价¥' + up.toFixed(0));
+            return '场次' + (i+1) + '(' + parts.join(', ') + ')';
+        }).join('; ');
+    }
+
+    // 素材端
+    if (materialData.length) {
+        let totalRec = materialData.find(r => isTotalRow(r));
+        if (totalRec) {
+            m['素材展示次数'] = (findNum(totalRec, ['整体展示次数','展示次数']) || 0).toLocaleString('zh-CN');
+            m['素材点击次数'] = (findNum(totalRec, ['整体点击次数','点击次数']) || 0).toLocaleString('zh-CN');
+            let ctr = findNum(totalRec, ['整体点击率','点击率']);
+            m['素材点击率'] = ctr !== null ? (ctr*100).toFixed(2) + '%' : '无数据';
+            let cvr = findNum(totalRec, ['整体转化率','转化率']);
+            m['素材转化率'] = cvr !== null ? (cvr*100).toFixed(2) + '%' : '无数据';
+            m['素材成交金额'] = '¥' + (findNum(totalRec, ['整体成交金额','成交金额']) || 0).toLocaleString('zh-CN', {maximumFractionDigits: 0});
+            m['素材消耗'] = '¥' + (findNum(totalRec, ['整体消耗','消耗']) || 0).toLocaleString('zh-CN', {maximumFractionDigits: 0});
+            m['素材净成交ROI'] = (findNum(totalRec, ['净成交ROI','净ROI']) || 0).toFixed(2);
+            // 追投调控
+            let zr = findNum(totalRec, ['追投调控净成交ROI']);
+            let zc = findNum(totalRec, ['追投调控消耗']);
+            let zg = findNum(totalRec, ['追投调控成交金额']);
+            if (zr !== null) m['追投调控净ROI'] = zr.toFixed(2);
+            if (zc !== null) m['追投调控消耗'] = '¥' + zc.toLocaleString('zh-CN', {maximumFractionDigits: 0});
+            if (zg !== null) m['追投调控成交金额'] = '¥' + zg.toLocaleString('zh-CN', {maximumFractionDigits: 0});
+            let bc = findNum(totalRec, ['基础消耗']);
+            if (bc !== null) m['基础素材消耗'] = '¥' + bc.toLocaleString('zh-CN', {maximumFractionDigits: 0});
+        }
+    }
+
+    return m;
+}
+
+// DeepSeek API 配置
+const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
+const DEEPSEEK_MODEL = 'deepseek-chat';
+
+const AI_SYSTEM_PROMPT = `你是一位资深的抖音直播投放分析师和优化师，擅长千川投放、直播间运营和素材策略。
+
+你的任务是根据用户提供的直播投放数据摘要，给出专业、具体、可落地的分析。
+
+分析原则：
+1. 所有结论必须严格基于给出的数据，禁止凭空猜测或编造数据
+2. 问题诊断要具体到数字，不要泛泛而谈
+3. 优化建议要可执行，包含具体操作步骤和时间节点
+4. 使用Markdown格式输出，结构清晰
+5. 关键数字用**加粗**标注
+6. 如果数据不足以支撑某项分析，明确说明"数据不足"而非强行分析
+
+行业基准参考：
+- 支付ROI: >2.0优秀, 1.5-2.0及格, <1.5需优化, <1.2亏损
+- 退款率: <10%健康, 10-15%需关注, >15%严重
+- 看播粉丝占比: >5%健康, <5%说明自然流撬动差
+- 人均观看时长: 90-120秒为健康区间
+- 素材点击率: >3%为优秀
+- 商品点击率(人数): >8%为良好`;
+
+function buildUserMessage(type, metrics, question) {
+    let lines = [];
+    for (let [key, value] of Object.entries(metrics)) {
+        if (value !== null && value !== undefined && value !== '') {
+            lines.push('- ' + key + ': ' + value);
+        }
+    }
+    let dataStr = lines.join('\n');
+
+    if (type === 'diagnose') {
+        return `以下是本次直播投放的核心数据摘要：\n\n${dataStr}\n\n请进行深度诊断分析，包括：\n1. **整体投放健康度评估**（一句话结论）\n2. **三大端口核心问题**（内容素材/直播间/千川投放，每个端口列出1-3个关键问题）\n3. **最紧急的P0问题**（按影响程度排序，最多3个）\n4. **数据盲区提醒**（哪些维度数据缺失，可能掩盖了什么问题）\n\n请直接给出分析，不要重复数据本身。`;
+    }
+
+    if (type === 'optimize') {
+        return `以下是本次直播投放的核心数据摘要：\n\n${dataStr}\n\n请基于以上数据，制定下一场直播的优化方案：\n1. **素材端优化**（新素材方向、轮换策略、素材配比）\n2. **直播间端优化**（话术、排品、时长、互动策略）\n3. **千川投放端优化**（预算分配、出价策略、计划调整、时段控速）\n4. **执行优先级排序**（按ROI影响从高到低排序，标注"立即执行"或"下场执行"）\n5. **预期效果**（每项优化预期带来的指标变化方向）\n\n要求每条建议都标注"数据支撑"来自哪个具体数字。`;
+    }
+
+    if (type === 'chat') {
+        return `以下是本次直播投放的核心数据摘要：\n\n${dataStr}\n\n用户问题：${question}\n\n请基于数据回答用户的问题。如果问题超出数据范围，可以结合行业经验给出建议，但要明确区分"数据支撑"和"经验建议"。`;
+    }
+
+    return dataStr;
+}
+
+// 调用DeepSeek AI（前端直连）
+async function callAI(type) {
+    let resultDiv = document.getElementById('aiResult');
+    let question = document.getElementById('aiQuestion') ? document.getElementById('aiQuestion').value.trim() : '';
+    let apiKey = document.getElementById('aiApiKey') ? document.getElementById('aiApiKey').value.trim() : '';
+
+    if (!apiKey) {
+        resultDiv.className = 'ai-result ai-error';
+        resultDiv.textContent = '请先输入 DeepSeek API Key';
+        return;
+    }
+
+    if (type === 'chat' && !question) {
+        resultDiv.className = 'ai-result ai-error';
+        resultDiv.textContent = '请输入问题后再提问';
+        return;
+    }
+
+    // 禁用所有AI按钮
+    let buttons = document.querySelectorAll('.btn-ai, .ai-chat-box button');
+    buttons.forEach(b => b.disabled = true);
+
+    // 显示加载状态
+    resultDiv.className = 'ai-result';
+    resultDiv.innerHTML = '<div class="ai-loading"><div class="spinner"></div><span>AI正在分析数据，请稍候（通常10-20秒）...</span></div>';
+
+    try {
+        // 提取指标摘要
+        let liveData = uploadedFiles.filter(f => f.type === 'live').flatMap(f => f.data);
+        let adData = uploadedFiles.filter(f => f.type === 'ad').flatMap(f => f.data);
+        let materialData = uploadedFiles.filter(f => f.type === 'material').flatMap(f => f.data);
+        let metrics = extractMetricsSummary(liveData, adData, materialData);
+
+        let userMessage = buildUserMessage(type, metrics, question);
+
+        // 直接调用DeepSeek API
+        let response = await fetch(DEEPSEEK_API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + apiKey
+            },
+            body: JSON.stringify({
+                model: DEEPSEEK_MODEL,
+                messages: [
+                    { role: 'system', content: AI_SYSTEM_PROMPT },
+                    { role: 'user', content: userMessage }
+                ],
+                temperature: 0.3,
+                max_tokens: 2000,
+                stream: false
+            })
+        });
+
+        if (!response.ok) {
+            let errData = await response.json().catch(() => ({}));
+            throw new Error(errData.error?.message || `API返回错误 (${response.status})`);
+        }
+
+        let data = await response.json();
+        let content = data.choices?.[0]?.message?.content || 'AI未返回有效内容';
+
+        // 渲染Markdown结果
+        resultDiv.className = 'ai-result';
+        resultDiv.innerHTML = renderMarkdown(content);
+
+        // 显示token用量
+        if (data.usage) {
+            let statusDiv = document.createElement('div');
+            statusDiv.className = 'ai-status';
+            statusDiv.textContent = 'Token用量: ' + (data.usage.total_tokens || '—');
+            resultDiv.appendChild(statusDiv);
+        }
+
+        // 清空问题输入框
+        if (type === 'chat' && document.getElementById('aiQuestion')) {
+            document.getElementById('aiQuestion').value = '';
+        }
+
+    } catch (err) {
+        resultDiv.className = 'ai-result ai-error';
+        resultDiv.textContent = 'AI分析失败: ' + err.message + '\n\n请检查API Key是否正确，或稍后重试。';
+    } finally {
+        buttons.forEach(b => b.disabled = false);
+    }
+}
+
+// 简易Markdown渲染器
+function renderMarkdown(md) {
+    if (!md) return '';
+    let html = md;
+
+    // 转义HTML特殊字符（保留代码块中的内容）
+    html = html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+    // 代码块
+    html = html.replace(/```([\s\S]*?)```/g, (m, code) => '<pre><code>' + code.trim() + '</code></pre>');
+
+    // 标题
+    html = html.replace(/^#### (.+)$/gm, '<h4>$1</h4>');
+    html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+    html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+    html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+
+    // 粗体
+    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+
+    // 行内代码
+    html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+    // 引用块
+    html = html.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>');
+
+    // 无序列表
+    html = html.replace(/^(\s*)[-*] (.+)$/gm, '$1<li>$2</li>');
+    html = html.replace(/(<li>[\s\S]*?<\/li>)(?!\s*<li>)/g, '<ul>$1</ul>');
+
+    // 有序列表
+    html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
+
+    // 段落（连续两个换行）
+    html = html.replace(/\n\n/g, '</p><p>');
+    html = '<p>' + html + '</p>';
+
+    // 清理空段落
+    html = html.replace(/<p>\s*<\/p>/g, '');
+    html = html.replace(/<p>\s*(<h[1-4]>)/g, '$1');
+    html = html.replace(/(<\/h[1-4]>)\s*<\/p>/g, '$1');
+    html = html.replace(/<p>\s*(<ul>)/g, '$1');
+    html = html.replace(/(<\/ul>)\s*<\/p>/g, '$1');
+    html = html.replace(/<p>\s*(<pre>)/g, '$1');
+    html = html.replace(/(<\/pre>)\s*<\/p>/g, '$1');
+    html = html.replace(/<p>\s*(<blockquote>)/g, '$1');
+    html = html.replace(/(<\/blockquote>)\s*<\/p>/g, '$1');
+
+    return html;
+}
+</script>
+
+<!-- AIGC: {"Label":"value1","ContentProducer":"001191110000802100433B11010001191110000802100433B11010","ProduceID":"b59dbcc4-7aa3-40ad-a8be-040bea03a3b2","ReservedCode1":"72dafc97cd38b92e5f3d5cdfd0dfbbe6","ContentPropagator":"001191110000802100433B11010001191110000802100433B11010","PropagateID":"8bba2b04-8f8d-44e0-addb-82e983df318d","ReservedCode2":"2734827274df537123a472bf4de01eb5"} -->
+</body>
+</html>
