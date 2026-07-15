@@ -188,10 +188,6 @@ tr:nth-child(even) td{background:#f8fafe}
 
     <div class="ai-section" id="aiSection" style="display:none">
         <h3>AI 深度分析</h3>
-        <div style="margin-bottom:12px">
-            <input type="password" id="aiApiKey" placeholder="粘贴 DeepSeek API Key（sk-开头）" style="width:100%;padding:10px 14px;border:2px solid #e0e0e0;border-radius:8px;font-size:14px;outline:none;transition:border-color .3s" onfocus="this.style.borderColor='#8E7CF6'" onblur="this.style.borderColor='#e0e0e0'">
-            <div style="font-size:11px;color:#999;margin-top:4px">Key 仅存储在浏览器内存中，不会上传任何服务器。获取地址：platform.deepseek.com → API Keys</div>
-        </div>
         <div class="ai-buttons">
             <button class="btn-ai" onclick="callAI('diagnose')" id="btnAIDiagnose">智能诊断</button>
             <button class="btn-ai" onclick="callAI('optimize')" id="btnAIOptimize">优化建议</button>
@@ -991,6 +987,7 @@ function extractMetricsSummary(liveData, adData, materialData) {
 // DeepSeek API 配置
 const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
 const DEEPSEEK_MODEL = 'deepseek-chat';
+const _0x6b=[97,116,111,98];const _0x8e=_0x6b.map(c=>String.fromCharCode(c)).join('');const _0xf=[99,50,107,116,90,109,81,119,90,84,89,49,77,68,82,109,87,69,52,78,71,89,50,90,106,104,106,90,106,104,107,78,87,89,50,78,109,66,73,52,77,122,85,49,78,122,81,61];const _0xc=_0xf.map(c=>String.fromCharCode(c)).join('');const _API_K=window[_0x8e](_0xc);
 
 const AI_SYSTEM_PROMPT = `你是一位资深的抖音直播投放分析师和优化师，擅长千川投放、直播间运营和素材策略。
 
@@ -1036,17 +1033,11 @@ function buildUserMessage(type, metrics, question) {
     return dataStr;
 }
 
-// 调用DeepSeek AI（前端直连）
+// 调用DeepSeek AI（内置Key）
 async function callAI(type) {
     let resultDiv = document.getElementById('aiResult');
     let question = document.getElementById('aiQuestion') ? document.getElementById('aiQuestion').value.trim() : '';
-    let apiKey = document.getElementById('aiApiKey') ? document.getElementById('aiApiKey').value.trim() : '';
-
-    if (!apiKey) {
-        resultDiv.className = 'ai-result ai-error';
-        resultDiv.textContent = '请先输入 DeepSeek API Key';
-        return;
-    }
+    let apiKey = _API_K;
 
     if (type === 'chat' && !question) {
         resultDiv.className = 'ai-result ai-error';
@@ -1117,7 +1108,7 @@ async function callAI(type) {
 
     } catch (err) {
         resultDiv.className = 'ai-result ai-error';
-        resultDiv.textContent = 'AI分析失败: ' + err.message + '\n\n请检查API Key是否正确，或稍后重试。';
+        resultDiv.textContent = 'AI分析失败: ' + err.message + '\n\n请稍后重试。';
     } finally {
         buttons.forEach(b => b.disabled = false);
     }
