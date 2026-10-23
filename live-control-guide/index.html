@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>抖音电商直播场控与运营全能指南</title>
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+
+<div id="app">
+
+<!-- 侧边栏 -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <h1 class="logo">直播场控<br>运营指南</h1>
+    <p class="subtitle">抖音电商实战培训系统</p>
+  </div>
+  <nav class="nav-menu">
+    <div class="nav-section">
+      <div class="nav-section-title">知识库</div>
+      <a class="nav-item" data-content="role-framework">场控vs运营</a>
+      <a class="nav-item" data-content="pre-live-prep">直播前准备</a>
+      <a class="nav-item" data-content="live-emergency">直播中应急</a>
+      <a class="nav-item" data-content="post-live-review">直播后复盘</a>
+      <a class="nav-item" data-content="team-collaboration">团队协作</a>
+      <a class="nav-item" data-content="career-development">职业发展</a>
+      <a class="nav-item" data-content="data-analysis-guide">数据分析指南</a>
+      <a class="nav-item" data-content="training-template">培训模板</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">AI 助手</div>
+      <a class="nav-item" data-tab="qa">智能问答</a>
+      <a class="nav-item" data-tab="analysis">数据截图分析</a>
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <p>v1.0 | 仅供培训使用</p>
+  </div>
+</aside>
+
+<!-- 主内容区 -->
+<main class="main-content">
+
+<!-- 顶部栏 -->
+<header class="topbar">
+  <button class="menu-toggle" id="menuToggle" aria-label="菜单">☰</button>
+  <div class="breadcrumb" id="breadcrumb">首页</div>
+</header>
+
+<!-- 知识库阅读区 -->
+<section class="content-view" id="contentView">
+  <div class="content-loader">加载中...</div>
+</section>
+
+<!-- AI问答区 -->
+<section class="qa-view" id="qaView" style="display:none;">
+  <div class="qa-header">
+    <h2>智能问答助手</h2>
+    <p>描述你在直播运营中遇到的问题，AI会结合知识库给出针对性建议</p>
+  </div>
+  <div class="qa-settings" id="qaSettings">
+    <details class="api-key-section">
+      <summary>设置 API Key（点击展开）</summary>
+      <div class="api-key-form">
+        <label>选择AI服务商</label>
+        <select id="apiProvider">
+          <option value="deepseek">DeepSeek</option>
+          <option value="openai">OpenAI（兼容接口）</option>
+          <option value="baidu">百度千帆</option>
+        </select>
+        <label>API Key</label>
+        <input type="password" id="apiKeyInput" placeholder="填入你的API Key" autocomplete="off">
+        <label>API Base URL（可选，默认使用官方地址）</label>
+        <input type="text" id="apiBaseUrl" placeholder="如 https://api.deepseek.com/v1">
+        <button class="btn-save-key" id="saveKeyBtn">保存</button>
+        <span class="key-status" id="keyStatus"></span>
+      </div>
+      <p class="api-hint">Key仅保存在浏览器本地，不会上传到任何服务器。每次刷新后需重新填写。</p>
+    </details>
+  </div>
+  <div class="qa-chat" id="qaChat">
+    <div class="qa-message assistant">
+      <div class="msg-avatar">AI</div>
+      <div class="msg-body">
+        <p>你好！我是直播场控与运营AI助手。你可以问我任何关于直播电商的问题，例如：</p>
+        <ul>
+          <li>直播间流量突然暴跌怎么办？</li>
+          <li>场控怎么晋升运营？需要具备什么能力？</li>
+          <li>罗盘大屏的转化率多少算正常？</li>
+          <li>排品时引流款和利润款的比例怎么安排？</li>
+          <li>主播状态不好怎么处理？</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="qa-input-area">
+    <textarea id="qaInput" placeholder="输入你的问题..." rows="2"></textarea>
+    <button id="qaSendBtn" class="btn-send">发送</button>
+  </div>
+</section>
+
+<!-- 数据截图分析区 -->
+<section class="analysis-view" id="analysisView" style="display:none;">
+  <div class="analysis-header">
+    <h2>直播数据截图分析</h2>
+    <p>上传罗盘大屏、千川投放大屏、抖店后台等截图，AI会识别数据并给出诊断建议</p>
+  </div>
+  <div class="analysis-settings" id="analysisSettings">
+    <details class="api-key-section">
+      <summary>设置 API Key（点击展开）</summary>
+      <div class="api-key-form">
+        <label>选择AI服务商</label>
+        <select id="apiProvider2">
+          <option value="deepseek">DeepSeek</option>
+          <option value="openai">OpenAI（兼容接口）</option>
+          <option value="baidu">百度千帆</option>
+        </select>
+        <label>API Key</label>
+        <input type="password" id="apiKeyInput2" placeholder="填入你的API Key" autocomplete="off">
+        <label>API Base URL（可选）</label>
+        <input type="text" id="apiBaseUrl2" placeholder="如 https://api.deepseek.com/v1">
+        <button class="btn-save-key" id="saveKeyBtn2">保存</button>
+        <span class="key-status" id="keyStatus2"></span>
+      </div>
+      <p class="api-hint">需支持视觉理解的模型（如DeepSeek-VL、GPT-4o等）。Key仅保存在本地。</p>
+    </details>
+  </div>
+  <div class="upload-area" id="uploadArea">
+    <div class="upload-zone" id="uploadZone">
+      <div class="upload-icon">📷</div>
+      <p>点击或拖拽上传截图</p>
+      <input type="file" id="fileInput" accept="image/*" multiple style="display:none;">
+    </div>
+  </div>
+  <div class="preview-area" id="previewArea"></div>
+  <div class="analysis-result" id="analysisResult"></div>
+  <div class="analysis-input-area">
+    <textarea id="analysisPrompt" placeholder="补充说明（可选）：如'这是昨晚8点的直播数据，品类是女装'" rows="2"></textarea>
+    <button id="analyzeBtn" class="btn-analyze" disabled>开始分析</button>
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
